@@ -183,6 +183,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     t = Thread(target=self.mqtt_sensor_run, name=("Yeelink MQTT id=" + sensor["id"]), args=[sensor])
                     t.setDaemon(True)
                     t.start()
+                    
+            self.sensors = sensors #保存起来,这样就能快捷访问了
+                    
             self.ui_button_get_sensors.setEnabled(False)
             self.ui_combo_devid.setEnabled(False)
             
@@ -300,3 +303,138 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
         self.D(TAG_SELF, u"触发串口关闭")
         self.com_reading = False
+
+    
+    @pyqtSignature("")
+    def on_ui_button_mock_start_pressed(self):
+        """
+        Slot documentation goes here.
+        """
+        try :
+            import bottle
+            bottle.debug(True)
+            self.mock_app = bottle.Bottle()
+            
+            def before_req():
+                self.D(TAG_MOCK, "before req " + str(bottle.request))
+                if bottle.request.method == "GET" :
+                    return
+                key = bottle.request.headers().get("U-ApiKey")
+                if not key :
+                    self.D(TAG_MOCK, "U-ApiKey not in header!")
+                    raise bottle.HTTPError(403)
+                if key != self.apikey() :
+                    self.D(TAG_MOCK, "U-ApiKey NOT match %s %s" % (key, self.apikey()))
+                    raise bottle.HTTPError(403)
+                
+            def after_req():
+                self.D(TAG_MOCK, "after req  " + str(bottle.request))
+            
+            self.mock_app.add_hook("before_request", before_req)
+            self.mock_app.add_hook("after_request", after_req)
+            
+            @bottle.post("/v1.1/device/<dev_id>/sensor/<sensor_id>/datapoints")
+            def data_upload(dev_id, sensor_id):
+                if dev_id != self.devid() :
+                    self.D(TAG_MOCK, "device_id NOT match %s %s" % (dev_id, self.devid()))
+                    raise bottle.HTTPError(403)
+                index = -1
+                for sensor in self.sensors:
+                    index += 1
+                    if sensor_id == sensor["id"] :
+                        if sensor["type"] == "0" or sensor["type"] == "6" or sensor["type"] == "6":
+                            try :
+                                p = json.load(bottle.request)
+                                if sensor["type"] == "0" or sensor["type"] == "6" :
+                                    t = p.get("timestamp")
+                                    if t :
+                                        self.D(TAG_MOCK, "timestamp = " + str(t))
+                                    v = p.get("value")
+                                    if not v :
+                                        self.D(TAG_MOCK, "NO value!! " + json.dumps(p))
+                                        raise bottle.HTTPError(406)
+                                    if sensor["type"] == "0" :
+                                        try :
+                                            v = int(v)
+                                        except:
+                                            self.D(TAG_MOCK, "NOT number value!! " + json.dumps(p))
+                                            raise bottle.HTTPError(406)
+                                    elif sensor["type"] == "6" :
+                                        try :
+                                            _ = v["lat"]
+                                            _ = v["lng"]
+                                            _ = v["speed"]
+                                        except:
+                                            self.D(TAG_MOCK, "NOT gps value!! " + json.dumps(p))
+                                            raise bottle.HTTPError(406)
+                                    
+                                    self.D(TAG_MOCK, "value ok, update it")
+                                    self.table_data.append([index, 4, str(v)])
+                                    self.table_data.append([index, 5, str(time.time())])
+                                    return
+                                elif sensor["type"] == "8" :
+                                    try :
+                                        _ = p["key"]
+                                        _ = p["value"]
+                                    except:
+                                        self.D(TAG_MOCK, "NOT raw value!! " + json.dumps(p))
+                                        raise bottle.HTTPError(406)
+                                    self.D(TAG_MOCK, "value ok, update it")
+                                    self.table_data.append([index, 4, str(p)])
+                                    self.table_data.append([index, 5, str(time.time())])
+                                return
+                            except bottle.HTTPError:
+                                raise
+                            except:
+                                self.D(TAG_MOCK, "Bad req : " + traceback.format_exc())
+                                raise bottle.HTTPError(406)
+                        else :
+                            self.D(TAG_MOCK, "Not updateable " + sensor["id"])
+                            raise bottle.HTTPError(406)
+                self.D(TAG_MOCK, "No match any sensor")
+                raise bottle.HTTPError(406)
+            
+            @bottle.get("/v1.1/device/<dev_id>/sensor/<sensor_id>/datapoints")
+            def data_get(dev_id, sensor_id):
+                if dev_id != self.devid() :
+                    self.D(TAG_MOCK, "device_id NOT match %s %s" % (dev_id, self.devid()))
+                    raise bottle.HTTPError(403)
+                index = -1
+                for sensor in self.sensors:
+                    index += 1
+                    if sensor_id != sensor["id"] :
+                        continue
+                    if sensor["type"] != "0" and sensor["type"] != "6" and sensor["type"] != "6":
+                        self.D(TAG_MOCK, "NOT getable" + sensor_id)
+                        raise bottle.HTTPError(403)
+                    item = self.ui_table_sensors.item(index, 4)
+                    if not item :
+                        self.D(TAG_MOCK, "NO value!!")
+                        raise bottle.HTTPError(403)
+                    if sensor["type"] == "0" or  sensor["type"] == "6" :
+                        return """{"value":%s}""" % str(item.text())
+                    else :
+                        return str(item.text())
+                self.D(TAG_MOCK, "No match any sensor")
+                raise bottle.HTTPError(406)
+            
+            def run():
+                self.mock_app.run(host="0.0.0.0", port=int(str(self.ui_spin_mock_port.text())))
+            t = Thread(target=run, name="Yeelink Mock server")
+            t.setDaemon(True)
+            t.start()
+            
+            self.ui_button_mock_stop.setEnabled(True)
+            self.ui_button_mock_start.setEnabled(False)
+            self.D(TAG_MOCK, u"启动成功")
+        except:
+            self.D(TAG_MOCK, u"启动失败" + traceback.format_exc())
+    
+    @pyqtSignature("")
+    def on_ui_button_mock_stop_pressed(self):
+        """
+        Slot documentation goes here.
+        """
+        # TODO: not implemented yet
+        self.mock_app.close()
+        self.D(TAG_MOCK, u"关闭")

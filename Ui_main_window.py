@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'I:\python_job\main_window.ui'
 #
-# Created: Sat Aug 09 21:58:32 2014
+# Created: Sat Aug 09 22:10:18 2014
 #      by: PyQt4 UI code generator 4.11.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -101,13 +101,13 @@ class Ui_MainWindow(object):
         self.label_13 = QtGui.QLabel(self.groupBox_2)
         self.label_13.setGeometry(QtCore.QRect(10, 60, 72, 15))
         self.label_13.setObjectName(_fromUtf8("label_13"))
-        self.pushButton = QtGui.QPushButton(self.groupBox_2)
-        self.pushButton.setGeometry(QtCore.QRect(30, 110, 181, 28))
-        self.pushButton.setObjectName(_fromUtf8("pushButton"))
-        self.pushButton_2 = QtGui.QPushButton(self.groupBox_2)
-        self.pushButton_2.setEnabled(False)
-        self.pushButton_2.setGeometry(QtCore.QRect(30, 150, 181, 28))
-        self.pushButton_2.setObjectName(_fromUtf8("pushButton_2"))
+        self.ui_button_mock_start = QtGui.QPushButton(self.groupBox_2)
+        self.ui_button_mock_start.setGeometry(QtCore.QRect(30, 110, 181, 28))
+        self.ui_button_mock_start.setObjectName(_fromUtf8("ui_button_mock_start"))
+        self.ui_button_mock_stop = QtGui.QPushButton(self.groupBox_2)
+        self.ui_button_mock_stop.setEnabled(False)
+        self.ui_button_mock_stop.setGeometry(QtCore.QRect(30, 150, 181, 28))
+        self.ui_button_mock_stop.setObjectName(_fromUtf8("ui_button_mock_stop"))
         self.groupBox_3 = QtGui.QGroupBox(self.centralWidget)
         self.groupBox_3.setGeometry(QtCore.QRect(10, 10, 851, 351))
         self.groupBox_3.setAutoFillBackground(True)
@@ -231,8 +231,8 @@ class Ui_MainWindow(object):
         self.comboBox.setItemText(1, _translate("MainWindow", "仅显示", None))
         self.label_12.setText(_translate("MainWindow", "端口", None))
         self.label_13.setText(_translate("MainWindow", "类型", None))
-        self.pushButton.setText(_translate("MainWindow", "开始", None))
-        self.pushButton_2.setText(_translate("MainWindow", "停止", None))
+        self.ui_button_mock_start.setText(_translate("MainWindow", "开始", None))
+        self.ui_button_mock_stop.setText(_translate("MainWindow", "停止", None))
         self.groupBox_3.setTitle(_translate("MainWindow", "Yeelink信息", None))
         self.ui_text_uapikey.setText(_translate("MainWindow", "f7bd63b34b30303a11a36f6fd7628ef4", None))
         self.ui_button_save_config.setText(_translate("MainWindow", "保存配置", None))

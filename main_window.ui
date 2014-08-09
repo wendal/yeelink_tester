@@ -300,7 +300,7 @@
       <string>类型</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton">
+    <widget class="QPushButton" name="ui_button_mock_start">
      <property name="geometry">
       <rect>
        <x>30</x>
@@ -313,7 +313,7 @@
       <string>开始</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_2">
+    <widget class="QPushButton" name="ui_button_mock_stop">
      <property name="enabled">
       <bool>false</bool>
      </property>
