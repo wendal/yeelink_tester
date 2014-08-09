@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'I:\python_job\main_window.ui'
 #
-# Created: Sat Aug 09 22:10:18 2014
+# Created: Sat Aug 09 23:30:00 2014
 #      by: PyQt4 UI code generator 4.11.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -234,7 +234,7 @@ class Ui_MainWindow(object):
         self.ui_button_mock_start.setText(_translate("MainWindow", "开始", None))
         self.ui_button_mock_stop.setText(_translate("MainWindow", "停止", None))
         self.groupBox_3.setTitle(_translate("MainWindow", "Yeelink信息", None))
-        self.ui_text_uapikey.setText(_translate("MainWindow", "f7bd63b34b30303a11a36f6fd7628ef4", None))
+        self.ui_text_uapikey.setText(_translate("MainWindow", "把你的key填这里,然后点检查密钥即可", None))
         self.ui_button_save_config.setText(_translate("MainWindow", "保存配置", None))
         self.ui_button_start_mqtt.setText(_translate("MainWindow", "开始订阅开关变化(MQTT)", None))
         self.ui_button_get_sensors.setText(_translate("MainWindow", "获取传感器列表", None))
