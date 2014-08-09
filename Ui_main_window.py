@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'I:\python_job\main_window.ui'
 #
-# Created: Sat Aug 09 17:24:59 2014
+# Created: Sat Aug 09 21:58:32 2014
 #      by: PyQt4 UI code generator 4.11.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -55,9 +55,6 @@ class Ui_MainWindow(object):
         self.ui_text_com_number.setGeometry(QtCore.QRect(100, 50, 87, 22))
         self.ui_text_com_number.setEditable(True)
         self.ui_text_com_number.setObjectName(_fromUtf8("ui_text_com_number"))
-        self.ui_text_com_number.addItem(_fromUtf8(""))
-        self.ui_text_com_number.addItem(_fromUtf8(""))
-        self.ui_text_com_number.addItem(_fromUtf8(""))
         self.ui_text_com_number.addItem(_fromUtf8(""))
         self.label_6 = QtGui.QLabel(self.groupBox)
         self.label_6.setGeometry(QtCore.QRect(30, 170, 72, 15))
@@ -145,9 +142,11 @@ class Ui_MainWindow(object):
         self.label_10.setGeometry(QtCore.QRect(30, 70, 72, 15))
         self.label_10.setObjectName(_fromUtf8("label_10"))
         self.ui_table_sensors = QtGui.QTableWidget(self.groupBox_3)
-        self.ui_table_sensors.setGeometry(QtCore.QRect(30, 130, 561, 201))
+        self.ui_table_sensors.setGeometry(QtCore.QRect(30, 130, 611, 201))
+        self.ui_table_sensors.setShowGrid(True)
+        self.ui_table_sensors.setCornerButtonEnabled(True)
         self.ui_table_sensors.setRowCount(5)
-        self.ui_table_sensors.setColumnCount(4)
+        self.ui_table_sensors.setColumnCount(6)
         self.ui_table_sensors.setObjectName(_fromUtf8("ui_table_sensors"))
         item = QtGui.QTableWidgetItem()
         self.ui_table_sensors.setHorizontalHeaderItem(0, item)
@@ -157,6 +156,11 @@ class Ui_MainWindow(object):
         self.ui_table_sensors.setHorizontalHeaderItem(2, item)
         item = QtGui.QTableWidgetItem()
         self.ui_table_sensors.setHorizontalHeaderItem(3, item)
+        item = QtGui.QTableWidgetItem()
+        self.ui_table_sensors.setHorizontalHeaderItem(4, item)
+        item = QtGui.QTableWidgetItem()
+        self.ui_table_sensors.setHorizontalHeaderItem(5, item)
+        self.ui_table_sensors.verticalHeader().setVisible(False)
         self.label_2 = QtGui.QLabel(self.groupBox_3)
         self.label_2.setGeometry(QtCore.QRect(30, 30, 72, 15))
         self.label_2.setObjectName(_fromUtf8("label_2"))
@@ -170,7 +174,7 @@ class Ui_MainWindow(object):
         self.groupBox_4.setGeometry(QtCore.QRect(10, 380, 851, 451))
         self.groupBox_4.setAutoFillBackground(True)
         self.groupBox_4.setObjectName(_fromUtf8("groupBox_4"))
-        self.ui_debug_console = QtGui.QPlainTextEdit(self.groupBox_4)
+        self.ui_debug_console = QtGui.QTextEdit(self.groupBox_4)
         self.ui_debug_console.setGeometry(QtCore.QRect(30, 60, 801, 351))
         self.ui_debug_console.setObjectName(_fromUtf8("ui_debug_console"))
         self.ui_checkbox_api_resp = QtGui.QCheckBox(self.groupBox_4)
@@ -213,10 +217,7 @@ class Ui_MainWindow(object):
         self.ui_text_com_checkbit.setItemText(2, _translate("MainWindow", "NDD", None))
         self.label_5.setText(_translate("MainWindow", "校验位", None))
         self.ui_button_stop_read.setText(_translate("MainWindow", "停止读取", None))
-        self.ui_text_com_number.setItemText(0, _translate("MainWindow", "COM1", None))
-        self.ui_text_com_number.setItemText(1, _translate("MainWindow", "COM2", None))
-        self.ui_text_com_number.setItemText(2, _translate("MainWindow", "COM3", None))
-        self.ui_text_com_number.setItemText(3, _translate("MainWindow", "COM4", None))
+        self.ui_text_com_number.setItemText(0, _translate("MainWindow", "COM2", None))
         self.label_6.setText(_translate("MainWindow", "数据位", None))
         self.ui_text_com_databit.setItemText(0, _translate("MainWindow", "8", None))
         self.label_3.setText(_translate("MainWindow", "端口", None))
@@ -249,6 +250,10 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "类型", None))
         item = self.ui_table_sensors.horizontalHeaderItem(3)
         item.setText(_translate("MainWindow", "数据前缀", None))
+        item = self.ui_table_sensors.horizontalHeaderItem(4)
+        item.setText(_translate("MainWindow", "最新值", None))
+        item = self.ui_table_sensors.horizontalHeaderItem(5)
+        item.setText(_translate("MainWindow", "最后更新时间", None))
         self.label_2.setText(_translate("MainWindow", "U-ApiKey", None))
         self.ui_button_help.setText(_translate("MainWindow", "帮助", None))
         self.groupBox_4.setTitle(_translate("MainWindow", "调试信息", None))
