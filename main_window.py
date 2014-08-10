@@ -21,6 +21,20 @@ TAG_API  = "API"
 TAG_MQTT = "MQTT"
 TAG_MOCK = "MOCK"
 
+SENSOR_COLUMN_ID = 0
+SENSOR_COLUMN_NAME = 1
+SENSOR_COLUMN_TYPE = 2
+SENSOR_COLUMN_VALUE = 3
+SENSOR_COLUMN_DATA_READ = 4
+SENSOR_COLUMN_DATA_WRITE = 5
+SENSOR_COLUMN_UPDATE_TIME = 6
+
+SENSOR_TYPE_NUMBER = "0"
+SENSOR_TYPE_GPS = "6"
+SENSOR_TYPE_IMAGE = "9"
+SENSOR_TYPE_SWITCH = "5"
+SENSOR_TYPE_RAW = "8"
+
 sensor_type_map = {
                    "0" : u"数值型",
                    "9" : u"图像型",
@@ -158,24 +172,24 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         Slot documentation goes here.
         """
         try :
-            print self.devid()
+            #print self.devid()
             sensors = json.loads(self.yeelink_send("/device/%s/sensors" % self.devid(), None))
             self.ui_table_sensors.setRowCount(len(sensors))
             index = 0
             for sensor in sensors :
-                print sensor
-                self.ui_table_sensors.setItem(index, 0, QTableWidgetItem(sensor["id"]))
-                self.ui_table_sensors.setItem(index, 1, QTableWidgetItem(sensor["title"]))
+                sensor["row_index"] = index
+                self.ui_table_sensors.setItem(index, SENSOR_COLUMN_ID, QTableWidgetItem(sensor["id"]))
+                self.ui_table_sensors.setItem(index, SENSOR_COLUMN_NAME, QTableWidgetItem(sensor["title"]))
                 sensor_type = sensor_type_map.get(str(sensor["type"]))
                 if not sensor_type :
                     sensor_type = "其他类型"
-                self.ui_table_sensors.setItem(index, 2, QTableWidgetItem(sensor_type))
+                self.ui_table_sensors.setItem(index, SENSOR_COLUMN_TYPE, QTableWidgetItem(sensor_type))
                 if sensor.get("last_data_gen") :
-                    self.ui_table_sensors.setItem(index, 4, QTableWidgetItem(sensor["last_data_gen"]))
+                    self.ui_table_sensors.setItem(index, SENSOR_COLUMN_VALUE, QTableWidgetItem(sensor["last_data_gen"]))
                 elif sensor.get("last_data") :
-                    self.ui_table_sensors.setItem(index, 4, QTableWidgetItem(sensor["last_data"]))
+                    self.ui_table_sensors.setItem(index, SENSOR_COLUMN_VALUE, QTableWidgetItem(sensor["last_data"]))
                 if sensor.get("last_update") :
-                    self.ui_table_sensors.setItem(index, 5, QTableWidgetItem(sensor["last_update"]))
+                    self.ui_table_sensors.setItem(index, SENSOR_COLUMN_UPDATE_TIME, QTableWidgetItem(sensor["last_update"]))
                 
                 index += 1
                 if sensor["type"] == "5" :
@@ -232,19 +246,45 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.ui_button_start_read.setEnabled(True)
         
     def handle_com_line(self, ser, line):
+        line = str(line)
         if not ":" in line :
-            self.D(ser.port, "Not match for any sensors")
+            self.D(ser.port, "Not command")
             return
         tmp = line.split(":", 2)
-        if len(tmp) != 2 :
-            self.D(ser.port, "Not match for any sensors")
+        if len(tmp) != 2 or len(tmp[1]) == 0 :
+            self.D(ser.port, "Not command")
             return
+        if tmp[0] == "r" :
+            sensor_id = None
+            for sensor in self.sensors :
+                if tmp[1] == sensor["id"] :
+                    sensor_id = sensor["id"]
+                    break
+                item = self.ui_table_sensors.item(sensor["row_index"], SENSOR_COLUMN_DATA_READ)
+                if item and str(item.text()) == tmp[1] :
+                    sensor_id = sensor["id"]
+                    break
+            if not sensor_id :
+                self.D(ser.port, "not match sensor")
+                return
+            re = self.yeelink_send("/device/%s/sensor/%s/datapoints" % (self.devid(), sensor_id), None)
+            re = json.loads(re)
+            if sensor["type"] == SENSOR_TYPE_RAW :
+                re = json.dumps(re)
+            else :
+                re = json.dumps(re["value"])
+            self.D(ser.port +".W", re)
+            ser.write(re + "\n")
+            return
+                    
         count = self.ui_table_sensors.rowCount()
         if not count :
             self.D(ser.port, "no sensor at all !!")
             return
         for row_index in range(count) :
-            item = self.ui_table_sensors.item(row_index, 3) #匹配数据前缀
+            #泛匹配
+            
+            item = self.ui_table_sensors.item(row_index, SENSOR_COLUMN_DATA_WRITE) #匹配数据前缀
             if not item :
                 continue
             p = str(item.text())
@@ -252,7 +292,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.D(ser.port, "NOT Match %s %s" % (p, tmp[0]))
                 continue
             
-            item = self.ui_table_sensors.item(row_index, 5) #匹配最后更新时间
+            item = self.ui_table_sensors.item(row_index, SENSOR_COLUMN_UPDATE_TIME) #匹配最后更新时间
             if item :
                 t = float(str(item.text()))
                 if time.time() - t < 30 :
@@ -264,8 +304,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 continue
             sensor_id = str(item.text())
             self.yeelink_send("/device/%s/sensor/%s/datapoints" % (self.devid(), sensor_id), """{"value":%s}""" % tmp[1])
-            self.table_data.append([row_index, 5, str(time.time())])
-            self.table_data.append([row_index, 4, str(tmp[1])])
+            self.table_data.append([row_index, SENSOR_COLUMN_UPDATE_TIME, str(time.time())])
+            self.table_data.append([row_index, SENSOR_COLUMN_VALUE, str(tmp[1])])
             return
         self.D(ser.port, "Not match for any sensors")
         
@@ -369,8 +409,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                                             raise bottle.HTTPError(406)
                                     
                                     self.D(TAG_MOCK, "value ok, update it")
-                                    self.table_data.append([index, 4, str(v)])
-                                    self.table_data.append([index, 5, str(time.time())])
+                                    self.table_data.append([index, SENSOR_COLUMN_VALUE, str(v)])
+                                    self.table_data.append([index, SENSOR_COLUMN_UPDATE_TIME, str(time.time())])
                                     return
                                 elif sensor["type"] == "8" :
                                     try :
@@ -380,8 +420,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                                         self.D(TAG_MOCK, "NOT raw value!! " + json.dumps(p))
                                         raise bottle.HTTPError(406)
                                     self.D(TAG_MOCK, "value ok, update it")
-                                    self.table_data.append([index, 4, str(p)])
-                                    self.table_data.append([index, 5, str(time.time())])
+                                    self.table_data.append([index, SENSOR_COLUMN_VALUE, str(p)])
+                                    self.table_data.append([index, SENSOR_COLUMN_UPDATE_TIME, str(time.time())])
                                 return
                             except bottle.HTTPError:
                                 raise
@@ -407,7 +447,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     if sensor["type"] != "0" and sensor["type"] != "6" and sensor["type"] != "6":
                         self.D(TAG_MOCK, "NOT getable" + sensor_id)
                         raise bottle.HTTPError(403)
-                    item = self.ui_table_sensors.item(index, 4)
+                    item = self.ui_table_sensors.item(index, SENSOR_COLUMN_VALUE)
                     if not item :
                         self.D(TAG_MOCK, "NO value!!")
                         raise bottle.HTTPError(403)
@@ -438,3 +478,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # TODO: not implemented yet
         self.mock_app.close()
         self.D(TAG_MOCK, u"关闭")
+
+    
+    @pyqtSignature("")
+    def on_ui_button_api_test_pressed(self):
+        """
+        Slot documentation goes here.
+        """
+        # TODO: not implemented yet
+        import yeelink_api_test
+        t = yeelink_api_test.YeelinkTestDialog(self)
+        t.ui_text_uapikey.setText(self.ui_text_uapikey.text())
+        t.show()
