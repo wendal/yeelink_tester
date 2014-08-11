@@ -36,11 +36,11 @@ SENSOR_TYPE_SWITCH = "5"
 SENSOR_TYPE_RAW = "8"
 
 sensor_type_map = {
-                   "0" : u"数值型",
-                   "9" : u"图像型",
-                   "5" : u"开关型",
-                   "6" : u"GPS型",
-                   "8" : u"泛型"
+                   SENSOR_TYPE_NUMBER : u"数值型",
+                   SENSOR_TYPE_IMAGE : u"图像型",
+                   SENSOR_TYPE_SWITCH : u"开关型",
+                   SENSOR_TYPE_GPS : u"GPS型",
+                   SENSOR_TYPE_RAW : u"泛型"
                    }
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -123,6 +123,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             mqttc = mqtt.Client()
             def on_message(client, userdata, msg):
                 self.D(TAG_SELF, "MQTT sensor update %s %s > %s" % (sensor["id"], sensor["title"], str(msg.payload)))
+                try :
+                    re = json.loads(msg.payload)
+                    s = "m:%s:%s" % (re["sensor_id"], re["value"])
+                    self.D(self.ser.port, s)
+                    self.ser.write(s + "\n")
+                except:
+                    traceback.print_exc()
             def on_connect(client, userdata, flags, rc):
                 self.D(TAG_SELF, "MQTT Connected with result code "+str(rc))
                 topic = "u/%s/v1.1/device/%s/sensor/%s/datapoints" % (self.apikey(), self.devid(), sensor["id"])
@@ -192,7 +199,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     self.ui_table_sensors.setItem(index, SENSOR_COLUMN_UPDATE_TIME, QTableWidgetItem(sensor["last_update"]))
                 
                 index += 1
-                if sensor["type"] == "5" :
+                if sensor["type"] == SENSOR_TYPE_SWITCH :
                     self.D(TAG_SELF, u"启动MQTT监听 sensor id=%s name=%s" % (sensor["id"], sensor["title"]))
                     t = Thread(target=self.mqtt_sensor_run, name=("Yeelink MQTT id=" + sensor["id"]), args=[sensor])
                     t.setDaemon(True)
@@ -274,7 +281,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             else :
                 re = json.dumps(re["value"])
             self.D(ser.port +".W", re)
-            ser.write(re + "\n")
+            ser.write("r:%s:%s\n" % (tmp[1], re))
             return
                     
         count = self.ui_table_sensors.rowCount()
@@ -327,6 +334,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.D(TAG_SELF, u"打开串口成功")
             self.ui_button_start_read.setEnabled(False)
             self.ui_button_stop_read.setEnabled(True)
+            self.ser = ser
             t = Thread(target=self.com_run, args=[ser], name="Yeelink COM Listener", )
             t.setDaemon(True)
             self.com_reading = True
@@ -478,7 +486,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # TODO: not implemented yet
         self.mock_app.close()
         self.D(TAG_MOCK, u"关闭")
-
+        self.ui_button_mock_start.setEnabled(True)
+        self.ui_button_mock_stop.setEnabled(False)
     
     @pyqtSignature("")
     def on_ui_button_api_test_pressed(self):
