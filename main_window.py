@@ -15,6 +15,7 @@ import serial.tools.list_ports
 from threading import Thread
 import time
 import paho.mqtt.client as mqtt
+import socket
 
 TAG_SELF = "SELF"
 TAG_API  = "API"
@@ -133,7 +134,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             def on_connect(client, userdata, flags, rc):
                 self.D(TAG_SELF, "MQTT Connected with result code "+str(rc))
                 topic = "u/%s/v1.1/device/%s/sensor/%s/datapoints" % (self.apikey(), self.devid(), sensor["id"])
-                print topic
+                #print topic
                 mqttc.subscribe([(str(topic), 0), ])
             mqttc.on_message = on_message
             mqttc.on_connect = on_connect
@@ -163,7 +164,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 return
             self.ui_combo_devid.clear()
             for dev in re :
-                print dev
+                #print dev
                 self.ui_combo_devid.addItem(QString("%s %s" % (dev["id"], dev["title"])))
             self.ui_button_get_sensors.setEnabled(True)
             self.ui_button_start_read.setEnabled(True)
@@ -359,121 +360,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         Slot documentation goes here.
         """
         try :
-            import bottle
-            bottle.debug(True)
-            self.mock_app = bottle.Bottle()
-            
-            def before_req():
-                self.D(TAG_MOCK, "before req " + str(bottle.request))
-                if bottle.request.method == "GET" :
-                    return
-                key = bottle.request.headers().get("U-ApiKey")
-                if not key :
-                    self.D(TAG_MOCK, "U-ApiKey not in header!")
-                    raise bottle.HTTPError(403)
-                if key != self.apikey() :
-                    self.D(TAG_MOCK, "U-ApiKey NOT match %s %s" % (key, self.apikey()))
-                    raise bottle.HTTPError(403)
-                
-            def after_req():
-                self.D(TAG_MOCK, "after req  " + str(bottle.request))
-            
-            self.mock_app.add_hook("before_request", before_req)
-            self.mock_app.add_hook("after_request", after_req)
-            
-            @bottle.post("/v1.1/device/<dev_id>/sensor/<sensor_id>/datapoints")
-            def data_upload(dev_id, sensor_id):
-                if dev_id != self.devid() :
-                    self.D(TAG_MOCK, "device_id NOT match %s %s" % (dev_id, self.devid()))
-                    raise bottle.HTTPError(403)
-                index = -1
-                for sensor in self.sensors:
-                    index += 1
-                    if sensor_id == sensor["id"] :
-                        if sensor["type"] == "0" or sensor["type"] == "6" or sensor["type"] == "6":
-                            try :
-                                p = json.load(bottle.request)
-                                if sensor["type"] == "0" or sensor["type"] == "6" :
-                                    t = p.get("timestamp")
-                                    if t :
-                                        self.D(TAG_MOCK, "timestamp = " + str(t))
-                                    v = p.get("value")
-                                    if not v :
-                                        self.D(TAG_MOCK, "NO value!! " + json.dumps(p))
-                                        raise bottle.HTTPError(406)
-                                    if sensor["type"] == "0" :
-                                        try :
-                                            v = int(v)
-                                        except:
-                                            self.D(TAG_MOCK, "NOT number value!! " + json.dumps(p))
-                                            raise bottle.HTTPError(406)
-                                    elif sensor["type"] == "6" :
-                                        try :
-                                            _ = v["lat"]
-                                            _ = v["lng"]
-                                            _ = v["speed"]
-                                        except:
-                                            self.D(TAG_MOCK, "NOT gps value!! " + json.dumps(p))
-                                            raise bottle.HTTPError(406)
-                                    
-                                    self.D(TAG_MOCK, "value ok, update it")
-                                    self.table_data.append([index, SENSOR_COLUMN_VALUE, str(v)])
-                                    self.table_data.append([index, SENSOR_COLUMN_UPDATE_TIME, str(time.time())])
-                                    return
-                                elif sensor["type"] == "8" :
-                                    try :
-                                        _ = p["key"]
-                                        _ = p["value"]
-                                    except:
-                                        self.D(TAG_MOCK, "NOT raw value!! " + json.dumps(p))
-                                        raise bottle.HTTPError(406)
-                                    self.D(TAG_MOCK, "value ok, update it")
-                                    self.table_data.append([index, SENSOR_COLUMN_VALUE, str(p)])
-                                    self.table_data.append([index, SENSOR_COLUMN_UPDATE_TIME, str(time.time())])
-                                return
-                            except bottle.HTTPError:
-                                raise
-                            except:
-                                self.D(TAG_MOCK, "Bad req : " + traceback.format_exc())
-                                raise bottle.HTTPError(406)
-                        else :
-                            self.D(TAG_MOCK, "Not updateable " + sensor["id"])
-                            raise bottle.HTTPError(406)
-                self.D(TAG_MOCK, "No match any sensor")
-                raise bottle.HTTPError(406)
-            
-            @bottle.get("/v1.1/device/<dev_id>/sensor/<sensor_id>/datapoints")
-            def data_get(dev_id, sensor_id):
-                if dev_id != self.devid() :
-                    self.D(TAG_MOCK, "device_id NOT match %s %s" % (dev_id, self.devid()))
-                    raise bottle.HTTPError(403)
-                index = -1
-                for sensor in self.sensors:
-                    index += 1
-                    if sensor_id != sensor["id"] :
-                        continue
-                    if sensor["type"] != "0" and sensor["type"] != "6" and sensor["type"] != "6":
-                        self.D(TAG_MOCK, "NOT getable" + sensor_id)
-                        raise bottle.HTTPError(403)
-                    item = self.ui_table_sensors.item(index, SENSOR_COLUMN_VALUE)
-                    if not item :
-                        self.D(TAG_MOCK, "NO value!!")
-                        raise bottle.HTTPError(403)
-                    if sensor["type"] == "0" or  sensor["type"] == "6" :
-                        return """{"value":%s}""" % str(item.text())
-                    else :
-                        return str(item.text())
-                self.D(TAG_MOCK, "No match any sensor")
-                raise bottle.HTTPError(406)
-            
-            def run():
-                self.mock_app.run(host="0.0.0.0", port=int(str(self.ui_spin_mock_port.text())))
-            t = Thread(target=run, name="Yeelink Mock server")
+            t = Thread(name="yeelink api proxy", target=self.yeelink_api_proxy)
             t.setDaemon(True)
             t.start()
             
             self.ui_button_mock_stop.setEnabled(True)
             self.ui_button_mock_start.setEnabled(False)
+            self.mock_running = True
             self.D(TAG_MOCK, u"启动成功")
         except:
             self.D(TAG_MOCK, u"启动失败" + traceback.format_exc())
@@ -484,7 +377,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         Slot documentation goes here.
         """
         # TODO: not implemented yet
-        self.mock_app.close()
+        self.mock_running = False
         self.D(TAG_MOCK, u"关闭")
         self.ui_button_mock_start.setEnabled(True)
         self.ui_button_mock_stop.setEnabled(False)
@@ -499,3 +392,158 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         t = yeelink_api_test.YeelinkTestDialog(self)
         t.ui_text_uapikey.setText(self.ui_text_uapikey.text())
         t.show()
+        
+    def yeelink_api_proxy(self):
+        PORT = int(str(self.ui_spin_mock_port.text()))
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        #s.settimeout(3)
+        s.bind(("", PORT))
+        s.listen(PORT)
+        while self.mock_running :
+            conn = None
+            _out = None
+            try:
+                conn, addr = s.accept()
+                self.D(TAG_MOCK, "Connected by " + str(addr))
+                _in = conn.makefile()
+                _out = conn.makefile("w")
+                
+                try :
+                    #读取请求头
+                    data = _in.read(4)
+                    if str(data) != "POST" :
+                        self.D(TAG_MOCK, u"不是POST请求,拒绝之.")
+                        continue
+                    data = _in.read(1)
+                    if str(data) != " " :
+                        self.D(TAG_MOCK, u"POST之后的不是空格,非法请求")
+                        continue
+                    #开始读取URI
+                    data = ""
+                    for i in xrange(1024) :
+                        d = _in.read(1)
+                        if d == ' ' :
+                            self.D(TAG_MOCK, u"读取到URI之后的空格, 识别URI为 " + data)
+                            break
+                        else :
+                            data += str(d)
+                        if i == 1023 :
+                            self.D(TAG_MOCK, u"读取1024字节之后还没结束, URI太长了,拒绝")
+                            data = None
+                    if data == None :
+                        continue
+                    if data == "" :
+                        self.D(TAG_MOCK, u"URI以空格开头,肯定是多输入了一个空格导致的,拒绝")
+                        continue
+                    #然后就是HTTP/1.1或者HTTP/1.0,然后接\r\n
+                    data = _in.read(len("HTTP/1.0\r\n"))
+                    #print data
+                    if not str(data).startswith("HTTP/1.0") and not str(data).startswith("HTTP/1.1") :
+                        self.D(TAG_MOCK, u"请求行不包含HTTP/1.0或HTTP/1.1,拒绝")
+                        continue
+                    if not str(data).endswith("\r\n") :
+                        self.D(TAG_MOCK, u"请求行不是以\\r\\n结束,拒绝")
+                        continue
+                    key_ok = False
+                    cnt_len = 0
+                    while 1 :
+                        header_line = ""
+                        while 1 :
+                            d = _in.read(1)
+                            if d == '\n' :
+                                break
+                            header_line += str(d)
+                        if header_line == "" :
+                            self.D(TAG_MOCK, u"检测到非法的Header,拒绝")
+                            break
+                        if header_line == "\r" :
+                            self.D(TAG_MOCK, u"检测到Header结束")
+                            break
+                        header_line = header_line.strip()
+                        self.D(TAG_MOCK, "Read Header --> " + str(header_line))
+                        if header_line.startswith("U-ApiKey: ") :
+                            self.D(TAG_MOCK, u"检测到U-ApiKey,对比本地数据中");
+                            _key = header_line.split(" ", 2)[1]
+                            if _key == self.apikey() :
+                                self.D(TAG_MOCK, u"U-ApiKey合法")
+                                key_ok = True
+                            else :
+                                self.D(TAG_MOCK, u"U-ApiKey不合法 [%s] [%s]" % (_key, self.apikey()))
+                                break
+                        elif header_line.startswith("Content-Length: ") :
+                            self.D(TAG_MOCK, u"检测到Content-Length: ")
+                            try :
+                                cnt_len = int(header_line.split(" ", 2)[1])
+                                self.D(TAG_MOCK, u"获取到请求主体的长度为" + str(cnt_len))
+                            except:
+                                self.D(TAG_MOCK, u"Content-Length 不是合法的整数值")
+                                break
+                    if not key_ok :
+                        self.D(TAG_MOCK, u"没有在Header里面找到合法U-ApiKey,拒绝")
+                        continue
+                    if cnt_len < 5 :
+                        self.D(TAG_MOCK, u"请求体太小,肯定不合法")
+                        continue
+                    #开始读取body
+                    try :
+                        body = _in.read(cnt_len)
+                        j = json.loads(body)
+                        self.D(TAG_MOCK, u"请求中的JSON数据(经过格式化) --> "  + json.dumps(j))
+                        if not j.get("value") :
+                            self.D(TAG_MOCK, u"数据里面没有名为value的键,肯定非法")
+                            break
+                        
+                        if j.get("key") :
+                            self.D(TAG_MOCK, u"看来是泛型数据,放行")
+                        elif j.get("value") :
+                            if json.dumps(j.get("value")).startswith("{") :
+                                self.D(TAG_MOCK, u"看上去是GPS数据,分析里面的key")
+                                gps = j.get("value")
+                                if not gps.get("lat") :
+                                    self.D(TAG_MOCK, u"缺失lan值")
+                                    continue
+                                if not gps.get("lng") :
+                                    self.D(TAG_MOCK, u"缺失lng值")
+                                    continue
+                                if str(gps.get("speed")) == "None" :
+                                    self.D(TAG_MOCK, u"缺失speed值")
+                                    continue
+                                self.D(TAG_MOCK, u"GPS数据 看上去合法")
+                            else :
+                                self.D(TAG_MOCK, u"看来不是GPS,那只能是数值型数据了,校验之")
+                                if isinstance(j.get("value"), float) :
+                                    self.D(TAG_MOCK, u"看来是合法的数值")
+                                else :
+                                    self.D(TAG_MOCK, u"不是JSON格式中的数值,拒绝")
+                                    break
+                        else :
+                            self.D(TAG_MOCK, u"数据里面没有名为key或timestamp的键,肯定非法")
+                            break
+                        
+                        # 看来是合法的哦, 返回个赞
+                        _out.write("HTTP/1.1 200 OK\r\nPower: wendal\r\nContent-Length: 0\r\n\r\n")
+                        _out.flush()
+                        conn.shutdown(1)
+                        conn.close()
+                        conn = None
+                    except:
+                        self.D(TAG_MOCK, u"yeelink上传的数据必然是json格式,然后它报错了,所以,你的数据不是合法JSON!!" + traceback.format_exc())
+                        break
+                except:
+                    self.D(TAG_MOCK, u"出错了!!" + traceback.format_exc())
+                
+            except:
+                traceback.print_exc()
+            finally:
+                if conn != None :
+                    try :
+                        self.D(TAG_MOCK, u"关闭连接 " + str(conn))
+                        _out.write("HTTP/1.1 403 Error\r\nPower: wendal\r\nContent-Length: 0\r\n\r\n")
+                        _out.flush()
+                        conn.shutdown(1)
+                        conn.close()
+                    except:
+                        self.D(TAG_MOCK, u"关闭连接失败!!" + traceback.format_exc())
+        s.close()
+            
+            
