@@ -255,10 +255,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         
     def handle_com_line(self, ser, line):
         line = str(line)
-        if not ":" in line :
+        if not ":" in line or line.endswith(":") :
             self.D(ser.port, "Not command")
             return
-        tmp = line.split(":", 2)
+        tmp = [line[:line.index(":")], line[line.index(":")+1:]]
+        print tmp
         if len(tmp) != 2 or len(tmp[1]) == 0 :
             self.D(ser.port, "Not command")
             return
