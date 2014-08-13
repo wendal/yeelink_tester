@@ -145,7 +145,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.D(TAG_SELF, "MQTT sensor update %s %s > %s" % (sensor["id"], sensor["title"], str(msg.payload)))
                 try :
                     re = json.loads(msg.payload)
-                    s = "%s:%s" % (sensor[WRITE_KEY], re["value"])
+                    s = "%s%s" % (sensor[WRITE_KEY], re["value"])
                     self.D(self.ser.port, s)
                     self.ser.write(s + "\n")
                 except:
@@ -286,7 +286,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         
         if line[0] == '[' or line[0] == '{' :
             try :
-                j = json.loads(line)
+                try :
+                    j = json.loads(line)
+                except:
+                    self.D(ser.port, u"非法的json字符串")
+                    return
                 if not j :
                     self.D(ser.port, u"没有包含任何数据")
                     return
@@ -336,17 +340,27 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 except:
                     self.D(ser.port, u"出错了" + traceback.format_exc())
                 return
+        
         for sensor in self.sensors :
             if line.startswith(sensor[WRITE_KEY]) :
                 data = line[len(sensor[WRITE_KEY]):]
                 if not data :
                     self.D(ser.port, u"没数据")
                     return
+                if data[0] == ":" :
+                    data = data[1:]
                 if data[0] == '{' :
-                    re = json.loads(data)
-                    if re.get("value") :
-                        self.yeelink_send("/device/%s/sensor/%s/datapoints" % (self.devid(), sensor["id"]), data)
-                        return
+                    try :
+                        try :
+                            re = json.loads(data)
+                        except:
+                            self.D(ser.port, u"非法的JSON字符串" + traceback.format_exc(2))
+                            return
+                        if re and re.get("value") :
+                            self.yeelink_send("/device/%s/sensor/%s/datapoints" % (self.devid(), sensor["id"]), data)
+                            return
+                    except:
+                        self.D(ser.port, "Bad Bad")
                 self.yeelink_send("/device/%s/sensor/%s/datapoints" % (self.devid(), sensor["id"]), """{"value":%s}""" % data)
                 return
         self.D(ser.port, u"没匹配任何传感器")
@@ -360,8 +374,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.D(TAG_SELF, u"尝试打开串口 ... ")
             ser = serial.Serial()
             ser.baudrate = int(str(self.ui_text_com_bitrate.currentText()))
-            #ser.bytesize = int(str(self.ui_text_com_databit.currentText()))
-            #ser.stopbits = int(str(self.ui_text_com_stopbit.currentText()))
+            ser.bytesize = int(str(self.ui_text_com_databit.currentText()))
+            ser.stopbits = int(str(self.ui_text_com_stopbit.currentText()))
             ser.port = str(self.ui_text_com_number.currentText())
             ser.timeout = 3
             ser.open()
