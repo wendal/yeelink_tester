@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 
 """
-Module implementing MainWindow.
+Yeelink Tester by wendal.net
 """
+
+# 修正windows UTF-8控制台下报错
+import codecs
+codecs.register(lambda name: codecs.lookup('utf-8') if name == 'cp65001' else None)
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -17,11 +21,13 @@ import time
 import paho.mqtt.client as mqtt
 import socket
 
+#日志头部的标签
 TAG_SELF = "SELF"
 TAG_API  = "API"
 TAG_MQTT = "MQTT"
 TAG_MOCK = "MOCK"
 
+#传感器表格每列的含义
 SENSOR_COLUMN_ID = 0
 SENSOR_COLUMN_NAME = 1
 SENSOR_COLUMN_TYPE = 2
@@ -30,15 +36,19 @@ SENSOR_COLUMN_DATA_WRITE = 4
 SENSOR_COLUMN_DATA_READ = 5
 SENSOR_COLUMN_UPDATE_TIME = 6
 
+#传感器类型
 SENSOR_TYPE_NUMBER = "0"
 SENSOR_TYPE_GPS = "6"
 SENSOR_TYPE_IMAGE = "9"
 SENSOR_TYPE_SWITCH = "5"
 SENSOR_TYPE_RAW = "8"
 
+# 读数据的key
 READ_KEY = "r_key"
+# 上传数据的前缀
 WRITE_KEY = "w_key"
 
+# 传感器类型的中文对应
 sensor_type_map = {
                    SENSOR_TYPE_NUMBER : u"数值型",
                    SENSOR_TYPE_IMAGE : u"图像型",
@@ -57,26 +67,30 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
         QMainWindow.__init__(self, parent)
         self.setupUi(self)
-        self.ui_table_sensors
         
+        # 初始化日志输出timer, 因为Qt的UI更新不能在子线程中执行
         self.log_timer = QTimer()
         self.logs = []
         self.log_timer.setInterval(1)
         self.log_timer.start(1)
         self.connect(self.log_timer, SIGNAL("timeout()"), self.append_log)
         
+        # 初始化传感器表格更新timer
         self.table_data = []
         self.table_timer = QTimer()
         self.table_timer.setInterval(1)
         self.table_timer.start(1)
         self.connect(self.table_timer, SIGNAL("timeout()"), self.table_update)
         
+        # 启动完成, 自然卖卖广告咯...
         self.D(TAG_SELF, u"启动完成 . Power by wendal http://wendal.net")
         
     def apikey(self):
-        return self.ui_text_uapikey.text()
+        """全局获取API KEY的帮助方法"""
+        return unicode(self.ui_text_uapikey.text())
     
     def devid(self):
+        """当前的设计只允许一个设备,所以全局来吧"""
         return unicode(self.ui_combo_devid.currentText()).split(" ")[0]
         
     def yeelink_send(self,  uri,  data):
@@ -84,22 +98,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         req = urllib2.Request(url, data)
         req.add_header("U-ApiKey", self.apikey())
         if data :
-            self.D(TAG_API, u"POST " + url)
+            self.D(TAG_API+".W", u"POST " + url)
             try :
-                self.D(TAG_API, str(data))
+                self.D(TAG_API+".W", str(data))
             except:
-                self.D(TAG_API, u"...")
+                self.D(TAG_API+".W", u"...")
         else :
-            self.D(TAG_API, u"GET " + url)
+            self.D(TAG_API+".W", u"GET " + url)
         try :
             resp = urllib2.urlopen(req)
-            self.D(TAG_API, u"resp > %d" % resp.code)
+            self.D(TAG_API + ".R", u"code=%d" % resp.code)
             return resp.read()
         except:
             self.D(TAG_API, u"FAIL" + traceback.format_exc())
             raise
     
     def D(self, TAG, msg):
+        """日志方法"""
         self.logs.append(QString("%-5s > %s\r\n" % (TAG, msg)))
         
     def append_log(self):
@@ -123,13 +138,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     
     def mqtt_sensor_run(self, sensor):
         
+        """MQTT监听"""
         try :
             mqttc = mqtt.Client()
             def on_message(client, userdata, msg):
                 self.D(TAG_SELF, "MQTT sensor update %s %s > %s" % (sensor["id"], sensor["title"], str(msg.payload)))
                 try :
                     re = json.loads(msg.payload)
-                    s = "m:%s:%s" % (re["sensor_id"], re["value"])
+                    s = "%s:%s" % (sensor[WRITE_KEY], re["value"])
                     self.D(self.ser.port, s)
                     self.ser.write(s + "\n")
                 except:
@@ -145,7 +161,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             
             mqttc.loop_forever()
         except:
-            self.D(TAG_SELF, "MQTT FAIL : " + traceback.format_exc())
+            self.D(TAG_SELF, u"MQTT 启动失败 : " + traceback.format_exc())
     
     @pyqtSignature("")
     def on_ui_button_help_pressed(self):
@@ -279,7 +295,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         if d.get("sensor_id") :
                             self.D(ser.port, u"数据是列表,且包含sensor_id,所以这是'多数据点(同一设备)', 执行上传")
                             try :
-                                self.yeelink_send("/v1.1/device/%s/datapoints" % self.devid(), line)
+                                self.yeelink_send("/device/%s/datapoints" % self.devid(), line)
                             except:
                                 self.D(ser.port, u"上传失败")
                             return
@@ -287,18 +303,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     for sensor in self.sensors :
                         if sensor[WRITE_KEY] == "" :
                             self.D(ser.port, u"作为传感器[id=%s,name=%s]的数据进行上传")
-                            self.yeelink_send("/v1.1/device/%s/sensor/%s/datapoints" % (self.devid(), sensor["id"]), line)
+                            self.yeelink_send("/device/%s/sensor/%s/datapoints" % (self.devid(), sensor["id"]), line)
                             return
                     self.D(ser.port, u"没有找到'数据上传'键为空字符的传感器,忽略数据")
                     return
                 if len(self.sensors) == 1 :
                     self.D(ser.port, u"只有一个传感器, 而且数据看上去ok, 那就上传吧")
-                    self.yeelink_send("/v1.1/device/%s/sensor/%s/datapoints" % (self.devid(), sensor["id"]), line)
+                    self.yeelink_send("/device/%s/sensor/%s/datapoints" % (self.devid(), sensor["id"]), line)
                     return
                 for sensor in self.sensors :
                     if sensor[WRITE_KEY] == "" :
                         self.D(ser.port, u"作为传感器[id=%s,name=%s]的数据进行上传")
-                        self.yeelink_send("/v1.1/device/%s/sensor/%s/datapoints" % (self.devid(), sensor["id"]), line)
+                        self.yeelink_send("/device/%s/sensor/%s/datapoints" % (self.devid(), sensor["id"]), line)
                         return
                 self.D(ser.port, u"没有找到'数据上传'键为空字符的传感器,忽略数据")
                 return
@@ -309,7 +325,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if line.startswith(sensor[READ_KEY]) :
                 self.D(ser.port, u"与传感器[id=%s, name=%s]的'数据读取'键匹配" % (sensor["id"], sensor["title"]))
                 try :
-                    re = self.yeelink_send("/v1.1/device/%s/sensor/%s/datapoints" % (self.devid(), sensor["id"]), None)
+                    re = self.yeelink_send("/device/%s/sensor/%s/datapoints" % (self.devid(), sensor["id"]), None)
                     re = json.loads(re)
                     if re.get("key") :
                         msg = sensor[WRITE_KEY] + json.dumps(re) + "\n"
@@ -329,9 +345,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 if data[0] == '{' :
                     re = json.loads(data)
                     if re.get("value") :
-                        self.yeelink_send("/v1.1/device/%s/sensor/%s/datapoints" % (self.devid(), sensor["id"]), data)
+                        self.yeelink_send("/device/%s/sensor/%s/datapoints" % (self.devid(), sensor["id"]), data)
                         return
-                self.yeelink_send("/v1.1/device/%s/sensor/%s/datapoints" % (self.devid(), sensor["id"]), """{"value":%s}""" % data)
+                self.yeelink_send("/device/%s/sensor/%s/datapoints" % (self.devid(), sensor["id"]), """{"value":%s}""" % data)
                 return
         self.D(ser.port, u"没匹配任何传感器")
         
@@ -576,6 +592,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if item.column() == SENSOR_COLUMN_DATA_READ :
             sensor[READ_KEY] = str(item.text())
             self.D(TAG_SELF, u"传感器[id=%s, name=%s]的'数据读取'键修改为%s" % (sensor["id"], sensor["title"], sensor[READ_KEY]))
+            return
         if item.column() == SENSOR_COLUMN_DATA_WRITE :
             sensor[WRITE_KEY] = str(item.text())
             self.D(TAG_SELF, u"传感器[id=%s, name=%s]的'数据上传'键修改为%s" % (sensor["id"], sensor["title"], sensor[WRITE_KEY]))
+            return
+        # TODO 如果修改的是值, 发请求更新服务器的值
+        
