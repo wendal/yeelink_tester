@@ -5,6 +5,7 @@ import sys
 from PyQt4 import QtCore, QtGui
 from main_window import MainWindow
 
+__version__ = "1.0"
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
