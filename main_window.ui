@@ -364,30 +364,14 @@
      </property>
      <property name="geometry">
       <rect>
-       <x>750</x>
-       <y>120</y>
-       <width>91</width>
+       <x>720</x>
+       <y>30</y>
+       <width>101</width>
        <height>31</height>
       </rect>
      </property>
      <property name="text">
       <string>保存配置</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="ui_button_start_mqtt">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>750</x>
-       <y>220</y>
-       <width>91</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>MQTT启动</string>
      </property>
     </widget>
     <widget class="QPushButton" name="ui_button_get_sensors">
@@ -396,9 +380,9 @@
      </property>
      <property name="geometry">
       <rect>
-       <x>610</x>
+       <x>590</x>
        <y>70</y>
-       <width>141</width>
+       <width>121</width>
        <height>31</height>
       </rect>
      </property>
@@ -406,28 +390,12 @@
       <string>获取传感器列表</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="ui_button_stop_mqtt">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>750</x>
-       <y>260</y>
-       <width>91</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>MQTT关闭</string>
-     </property>
-    </widget>
     <widget class="QPushButton" name="ui_button_check_api">
      <property name="geometry">
       <rect>
-       <x>610</x>
+       <x>590</x>
        <y>30</y>
-       <width>141</width>
+       <width>121</width>
        <height>31</height>
       </rect>
      </property>
@@ -472,7 +440,7 @@
       <rect>
        <x>10</x>
        <y>130</y>
-       <width>711</width>
+       <width>831</width>
        <height>201</height>
       </rect>
      </property>
@@ -518,12 +486,12 @@
      </column>
      <column>
       <property name="text">
-       <string>数据前缀</string>
+       <string>数据上传</string>
       </property>
      </column>
      <column>
       <property name="text">
-       <string>数据读取前缀</string>
+       <string>数据读取</string>
       </property>
      </column>
      <column>
@@ -545,19 +513,6 @@
       <string>U-ApiKey</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="ui_button_help">
-     <property name="geometry">
-      <rect>
-       <x>750</x>
-       <y>300</y>
-       <width>93</width>
-       <height>28</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>帮助</string>
-     </property>
-    </widget>
     <widget class="QComboBox" name="ui_combo_devid">
      <property name="geometry">
       <rect>
@@ -571,9 +526,9 @@
     <widget class="QPushButton" name="ui_button_api_test">
      <property name="geometry">
       <rect>
-       <x>750</x>
-       <y>170</y>
-       <width>93</width>
+       <x>720</x>
+       <y>70</y>
+       <width>101</width>
        <height>28</height>
       </rect>
      </property>
@@ -607,86 +562,6 @@
       </rect>
      </property>
     </widget>
-    <widget class="QCheckBox" name="ui_checkbox_api_resp">
-     <property name="geometry">
-      <rect>
-       <x>310</x>
-       <y>30</y>
-       <width>91</width>
-       <height>19</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>API响应</string>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
-     </property>
-    </widget>
-    <widget class="QCheckBox" name="ui_checkbox_com_data">
-     <property name="geometry">
-      <rect>
-       <x>130</x>
-       <y>30</y>
-       <width>91</width>
-       <height>19</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>串口数据</string>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
-     </property>
-     <property name="tristate">
-      <bool>false</bool>
-     </property>
-    </widget>
-    <widget class="QCheckBox" name="ui_checkbox_api_trace">
-     <property name="geometry">
-      <rect>
-       <x>400</x>
-       <y>30</y>
-       <width>161</width>
-       <height>19</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>详尽API输入输出</string>
-     </property>
-    </widget>
-    <widget class="QCheckBox" name="ui_checkbox_api_send">
-     <property name="geometry">
-      <rect>
-       <x>220</x>
-       <y>30</y>
-       <width>91</width>
-       <height>19</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>API发送</string>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
-     </property>
-    </widget>
-    <widget class="QCheckBox" name="ui_checkbox_self_trace">
-     <property name="geometry">
-      <rect>
-       <x>540</x>
-       <y>30</y>
-       <width>91</width>
-       <height>19</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>软件信息</string>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
-     </property>
-    </widget>
     <widget class="QPushButton" name="ui_button_clear_debug">
      <property name="geometry">
       <rect>
@@ -700,6 +575,19 @@
       <string>清空调试信息</string>
      </property>
     </widget>
+   </widget>
+   <widget class="QPushButton" name="ui_button_help">
+    <property name="geometry">
+     <rect>
+      <x>950</x>
+      <y>720</y>
+      <width>93</width>
+      <height>28</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>帮助</string>
+    </property>
    </widget>
   </widget>
  </widget>
