@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'I:\python_job\yeelink_api_test.ui'
 #
-# Created: Sun Aug 10 18:53:40 2014
+# Created: Tue Sep 09 22:02:13 2014
 #      by: PyQt4 UI code generator 4.11.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -36,9 +36,6 @@ class Ui_Dialog(object):
         self.label_2 = QtGui.QLabel(Dialog)
         self.label_2.setGeometry(QtCore.QRect(10, 60, 72, 15))
         self.label_2.setObjectName(_fromUtf8("label_2"))
-        self.ui_text_url = QtGui.QLineEdit(Dialog)
-        self.ui_text_url.setGeometry(QtCore.QRect(130, 60, 611, 21))
-        self.ui_text_url.setObjectName(_fromUtf8("ui_text_url"))
         self.label_3 = QtGui.QLabel(Dialog)
         self.label_3.setGeometry(QtCore.QRect(10, 100, 81, 16))
         self.label_3.setObjectName(_fromUtf8("label_3"))
@@ -72,6 +69,10 @@ class Ui_Dialog(object):
         self.ui_text_output = QtGui.QTextEdit(self.groupBox_2)
         self.ui_text_output.setGeometry(QtCore.QRect(10, 30, 621, 371))
         self.ui_text_output.setObjectName(_fromUtf8("ui_text_output"))
+        self.ui_text_url = QtGui.QComboBox(Dialog)
+        self.ui_text_url.setGeometry(QtCore.QRect(130, 60, 611, 22))
+        self.ui_text_url.setEditable(True)
+        self.ui_text_url.setObjectName(_fromUtf8("ui_text_url"))
 
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)

@@ -49,16 +49,6 @@
     <string>网址</string>
    </property>
   </widget>
-  <widget class="QLineEdit" name="ui_text_url">
-   <property name="geometry">
-    <rect>
-     <x>130</x>
-     <y>60</y>
-     <width>611</width>
-     <height>21</height>
-    </rect>
-   </property>
-  </widget>
   <widget class="QLabel" name="label_3">
    <property name="geometry">
     <rect>
@@ -192,6 +182,19 @@
      </rect>
     </property>
    </widget>
+  </widget>
+  <widget class="QComboBox" name="ui_text_url">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>60</y>
+     <width>611</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="editable">
+    <bool>true</bool>
+   </property>
   </widget>
  </widget>
  <resources/>

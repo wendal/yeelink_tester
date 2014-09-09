@@ -12,6 +12,10 @@ import PyQt4.QtGui
 import urllib2
 import traceback
 
+handler=urllib2.HTTPHandler(debuglevel=1)
+opener = urllib2.build_opener(handler)
+#urllib2.install_opener(opener)
+
 class YeelinkTestDialog(QDialog, Ui_Dialog):
     """
     Class documentation goes here.
@@ -24,7 +28,7 @@ class YeelinkTestDialog(QDialog, Ui_Dialog):
         self.setupUi(self)
         
     def send(self, data):
-        url = str(self.ui_text_url.text())
+        url = str(self.ui_text_url.currentText())
         self.ui_text_output.clear()
         def log(msg):
             self.ui_text_output.append(msg)
@@ -32,6 +36,8 @@ class YeelinkTestDialog(QDialog, Ui_Dialog):
         log("URL: " + url)
         req = urllib2.Request(url, data)
         req.add_header("U-ApiKey", str(self.ui_text_uapikey.text()))
+        if data :
+            req.add_header("Content-Length", str(len(data)))
         try :
             resp = urllib2.urlopen(req)
             log("Resp Code " + str(resp.code))
@@ -54,7 +60,7 @@ class YeelinkTestDialog(QDialog, Ui_Dialog):
         """
         Slot documentation goes here.
         """
-        with open(str(self.ui_text_file_path.text())) as f :
+        with open(str(self.ui_text_file_path.text()), "rb") as f :
             self.send(f.read())
     
     @pyqtSignature("")

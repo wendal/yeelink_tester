@@ -438,6 +438,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         import yeelink_api_test
         t = yeelink_api_test.YeelinkTestDialog(self)
         t.ui_text_uapikey.setText(self.ui_text_uapikey.text())
+        try :
+            t.ui_text_url.clear()
+            for sensor in self.sensors :
+                t.ui_text_url.addItem(QString("http://api.yeelink.net/v1.1/device/%s/sensor/%s/datapoints" % (self.devid(), sensor["id"])))
+        except:
+            pass
         t.show()
         
     def yeelink_api_proxy(self):
