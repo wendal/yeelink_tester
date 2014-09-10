@@ -11,6 +11,7 @@ from Ui_yeelink_api_test import Ui_Dialog
 import PyQt4.QtGui
 import urllib2
 import traceback
+import os
 
 handler=urllib2.HTTPHandler(debuglevel=1)
 opener = urllib2.build_opener(handler)
@@ -27,12 +28,14 @@ class YeelinkTestDialog(QDialog, Ui_Dialog):
         QDialog.__init__(self, parent)
         self.setupUi(self)
         
-    def send(self, data):
+    def send(self, data, method=None):
         url = str(self.ui_text_url.currentText())
         self.ui_text_output.clear()
         def log(msg):
-            self.ui_text_output.append(msg)
-            self.ui_text_output.append("\n")
+            self.ui_text_output.appendPlainText(msg)
+            #self.ui_text_output.append("\n")
+        if method :
+            url += "?method=" + method
         log("URL: " + url)
         req = urllib2.Request(url, data)
         req.add_header("U-ApiKey", str(self.ui_text_uapikey.text()))
@@ -60,6 +63,8 @@ class YeelinkTestDialog(QDialog, Ui_Dialog):
         """
         Slot documentation goes here.
         """
+        if os.path.getsize(str(self.ui_text_file_path.text())) > 1024*1024 :
+            pass
         with open(str(self.ui_text_file_path.text()), "rb") as f :
             self.send(f.read())
     
@@ -68,7 +73,7 @@ class YeelinkTestDialog(QDialog, Ui_Dialog):
         """
         Slot documentation goes here.
         """
-        self.send(str(self.ui_text_data.toPlainText()))
+        self.send(self.ui_text_data.toPlainText().toUtf8().data())
     
     @pyqtSignature("")
     def on_ui_button_send_text_hex_pressed(self):
@@ -84,3 +89,20 @@ class YeelinkTestDialog(QDialog, Ui_Dialog):
         Slot documentation goes here.
         """
         self.send(None)
+
+    
+    @pyqtSignature("")
+    def on_ui_button_send_delete_released(self):
+        """
+        Slot documentation goes here.
+        """
+        # TODO: not implemented yet
+        self.send(None, method="DELETE")
+    
+    @pyqtSignature("")
+    def on_ui_button_send_text_put_released(self):
+        """
+        Slot documentation goes here.
+        """
+        # TODO: not implemented yet
+        self.send(self.ui_text_data.toPlainText().toUtf8().data(), method="PUT")
