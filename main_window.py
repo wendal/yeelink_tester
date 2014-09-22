@@ -48,13 +48,21 @@ READ_KEY = "r_key"
 # 上传数据的前缀
 WRITE_KEY = "w_key"
 
+YEELINK = "yeelink"
+UIOT = "uiot"
+
 # 传感器类型的中文对应
 sensor_type_map = {
                    SENSOR_TYPE_NUMBER : u"数值型",
                    SENSOR_TYPE_IMAGE : u"图像型",
                    SENSOR_TYPE_SWITCH : u"开关型",
                    SENSOR_TYPE_GPS : u"GPS型",
-                   SENSOR_TYPE_RAW : u"泛型"
+                   SENSOR_TYPE_RAW : u"泛型",
+                   "number" : u"数值型",
+                   "gps" : u"地理位置型",
+                   "kv" : u"泛型",
+                   "onoff" : u"开关型",
+                   "image" : u"图像型"
                    }
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -92,9 +100,33 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def devid(self):
         """当前的设计只允许一个设备,所以全局来吧"""
         return unicode(self.ui_combo_devid.currentText()).split(" ")[0]
+    
+    def srv_type(self):
+        return str(self.ui_txt_srv_type.currentText())
+    
+    def api_url(self, uri):
+        if self.srv_type() == YEELINK :
+            return "http://" + str(self.ui_txt_srv_api_url.text()) + "/v1.1" + uri
+        elif self.srv_type() == UIOT :
+            return "http://" + str(self.ui_txt_srv_api_url.text()) + "/iot" + uri
+        
+    def mqtt_topit(self, sensor_id):
+        if self.srv_type() == YEELINK :
+            return "v1.1/device/%s/sensor/%s/datapoints" % (self.devid(), str(sensor_id))
+        elif self.srv_type() == UIOT :
+            return "iot/sensor/%s" % (str(sensor_id),)
+        
+    def mqtt_srv(self):
+        if self.srv_type() == YEELINK :
+            return "mqtt.yeelink.net"
+        elif self.srv_type() == UIOT :
+            srv = str(self.ui_txt_srv_api_url.text())
+            if ":" in srv :
+                return srv[:srv.index(":")]
+            return srv
         
     def yeelink_send(self,  uri,  data):
-        url = "http://api.yeelink.net/v1.1" + uri
+        url = self.api_url(uri)
         req = urllib2.Request(url, data)
         req.add_header("U-ApiKey", self.apikey())
         if data :
@@ -142,7 +174,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         try :
             mqttc = mqtt.Client()
             def on_message(client, userdata, msg):
-                self.D(TAG_SELF, "MQTT sensor update %s %s > %s" % (sensor["id"], sensor["title"], str(msg.payload)))
+                self.D(TAG_SELF, "MQTT sensor update %s %s > %s" % (str(sensor["id"]), sensor["title"], str(msg.payload)))
                 try :
                     re = json.loads(msg.payload)
                     s = "%s%s" % (sensor[WRITE_KEY], re["value"])
@@ -152,12 +184,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     traceback.print_exc()
             def on_connect(client, userdata, flags, rc):
                 self.D(TAG_SELF, "MQTT Connected with result code "+str(rc))
-                topic = "u/%s/v1.1/device/%s/sensor/%s/datapoints" % (self.apikey(), self.devid(), sensor["id"])
+                #topic = "u/%s/v1.1/device/%s/sensor/%s/datapoints" % (self.apikey(), self.devid(), str(sensor["id"]))
                 #print topic
-                mqttc.subscribe([(str(topic), 0), ])
+                topic = self.mqtt_topit(sensor["id"])
+                try :
+                    mqttc.subscribe([(str(topic), 0), ])
+                except:
+                    pass
             mqttc.on_message = on_message
             mqttc.on_connect = on_connect
-            mqttc.connect("mqtt.yeelink.net")
+            #mqttc.connect("mqtt.yeelink.net")
+            mqttc.username_pw_set(str(self.ui_txt_username.text()), self.apikey())
+            mqttc.connect(self.mqtt_srv())
             
             mqttc.loop_forever()
         except:
@@ -209,11 +247,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             index = 0
             for sensor in sensors :
                 sensor["row_index"] = index
-                self.ui_table_sensors.setItem(index, SENSOR_COLUMN_ID, QTableWidgetItem(sensor["id"]))
+                self.ui_table_sensors.setItem(index, SENSOR_COLUMN_ID, QTableWidgetItem(str(sensor["id"])))
                 self.ui_table_sensors.setItem(index, SENSOR_COLUMN_NAME, QTableWidgetItem(sensor["title"]))
                 sensor_type = sensor_type_map.get(str(sensor["type"]))
                 if not sensor_type :
-                    sensor_type = "其他类型"
+                    sensor_type = u"其他类型"
                 self.ui_table_sensors.setItem(index, SENSOR_COLUMN_TYPE, QTableWidgetItem(sensor_type))
                 if sensor.get("last_data_gen") :
                     self.ui_table_sensors.setItem(index, SENSOR_COLUMN_VALUE, QTableWidgetItem(sensor["last_data_gen"]))
@@ -224,18 +262,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 
                 it = self.ui_table_sensors.item(index, SENSOR_COLUMN_DATA_WRITE)
                 if not it :
-                    self.ui_table_sensors.setItem(index, SENSOR_COLUMN_DATA_WRITE, QTableWidgetItem("w"+sensor["id"]+":"))
+                    self.ui_table_sensors.setItem(index, SENSOR_COLUMN_DATA_WRITE, QTableWidgetItem("w"+str(sensor["id"])+":"))
                 it = self.ui_table_sensors.item(index, SENSOR_COLUMN_DATA_READ)
                 if not it :
-                    self.ui_table_sensors.setItem(index, SENSOR_COLUMN_DATA_READ, QTableWidgetItem("r"+sensor["id"]))
+                    self.ui_table_sensors.setItem(index, SENSOR_COLUMN_DATA_READ, QTableWidgetItem("r"+str(sensor["id"])))
                     
                 sensor["w_key"] = str(self.ui_table_sensors.item(index, SENSOR_COLUMN_DATA_WRITE).text())
                 sensor["r_key"] = str(self.ui_table_sensors.item(index, SENSOR_COLUMN_DATA_READ).text())
                 
                 index += 1
-                if sensor["type"] == SENSOR_TYPE_SWITCH :
-                    self.D(TAG_SELF, u"启动MQTT监听 sensor id=%s name=%s" % (sensor["id"], sensor["title"]))
-                    t = Thread(target=self.mqtt_sensor_run, name=("Yeelink MQTT id=" + sensor["id"]), args=[sensor])
+                if sensor["type"] in (SENSOR_TYPE_SWITCH, "onoff") :
+                    self.D(TAG_SELF, u"启动MQTT监听 sensor id=%s name=%s" % (str(sensor["id"]), sensor["title"]))
+                    t = Thread(target=self.mqtt_sensor_run, name=("Yeelink MQTT id=" + str(sensor["id"])), args=[sensor])
                     t.setDaemon(True)
                     t.start()
                     
@@ -250,7 +288,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             for port, _, _ in  coms:
                 self.ui_text_com_number.addItem(QString(port))
         except:
-            self.D(TAG_SELF, "出错啦 " + traceback.format_exc())
+            self.D(TAG_SELF, u"出错啦: " + traceback.format_exc())
     
     @pyqtSignature("")
     def on_ui_button_clear_debug_pressed(self):
@@ -307,18 +345,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     for sensor in self.sensors :
                         if sensor[WRITE_KEY] == "" :
                             self.D(ser.port, u"作为传感器[id=%s,name=%s]的数据进行上传")
-                            self.yeelink_send("/device/%s/sensor/%s/datapoints" % (self.devid(), sensor["id"]), line)
+                            self.yeelink_send("/device/%s/sensor/%s/datapoints" % (self.devid(), str(sensor["id"])), line)
                             return
                     self.D(ser.port, u"没有找到'数据上传'键为空字符的传感器,忽略数据")
                     return
                 if len(self.sensors) == 1 :
                     self.D(ser.port, u"只有一个传感器, 而且数据看上去ok, 那就上传吧")
-                    self.yeelink_send("/device/%s/sensor/%s/datapoints" % (self.devid(), sensor["id"]), line)
+                    self.yeelink_send("/device/%s/sensor/%s/datapoints" % (self.devid(), str(sensor["id"])), line)
                     return
                 for sensor in self.sensors :
                     if sensor[WRITE_KEY] == "" :
                         self.D(ser.port, u"作为传感器[id=%s,name=%s]的数据进行上传")
-                        self.yeelink_send("/device/%s/sensor/%s/datapoints" % (self.devid(), sensor["id"]), line)
+                        self.yeelink_send("/device/%s/sensor/%s/datapoints" % (self.devid(), str(sensor["id"])), line)
                         return
                 self.D(ser.port, u"没有找到'数据上传'键为空字符的传感器,忽略数据")
                 return
@@ -327,9 +365,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 
         for sensor in self.sensors :
             if line.startswith(sensor[READ_KEY]) :
-                self.D(ser.port, u"与传感器[id=%s, name=%s]的'数据读取'键匹配" % (sensor["id"], sensor["title"]))
+                self.D(ser.port, u"与传感器[id=%s, name=%s]的'数据读取'键匹配" % (str(sensor["id"]), sensor["title"]))
                 try :
-                    re = self.yeelink_send("/device/%s/sensor/%s/datapoints" % (self.devid(), sensor["id"]), None)
+                    re = self.yeelink_send("/device/%s/sensor/%s/datapoints" % (self.devid(), str(sensor["id"])), None)
                     re = json.loads(re)
                     if re.get("key") :
                         msg = sensor[WRITE_KEY] + json.dumps(re) + "\n"
@@ -357,11 +395,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                             self.D(ser.port, u"非法的JSON字符串" + traceback.format_exc(2))
                             return
                         if re and re.get("value") :
-                            self.yeelink_send("/device/%s/sensor/%s/datapoints" % (self.devid(), sensor["id"]), data)
+                            self.yeelink_send("/device/%s/sensor/%s/datapoints" % (self.devid(), str(sensor["id"])), data)
                             return
                     except:
                         self.D(ser.port, "Bad Bad")
-                self.yeelink_send("/device/%s/sensor/%s/datapoints" % (self.devid(), sensor["id"]), """{"value":%s}""" % data)
+                self.yeelink_send("/device/%s/sensor/%s/datapoints" % (self.devid(), str(sensor["id"])), """{"value":%s}""" % data)
                 return
         self.D(ser.port, u"没匹配任何传感器")
         
@@ -441,7 +479,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         try :
             t.ui_text_url.clear()
             for sensor in self.sensors :
-                t.ui_text_url.addItem(QString("http://api.yeelink.net/v1.1/device/%s/sensor/%s/datapoints" % (self.devid(), sensor["id"])))
+                t.ui_text_url.addItem(QString(self.api_url("/device/%s/sensor/%s/datapoints" % (self.devid(), str(sensor["id"])))))
         except:
             pass
         t.show()
@@ -611,11 +649,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         sensor = self.sensors[item.row()]
         if item.column() == SENSOR_COLUMN_DATA_READ :
             sensor[READ_KEY] = str(item.text())
-            self.D(TAG_SELF, u"传感器[id=%s, name=%s]的'数据读取'键修改为%s" % (sensor["id"], sensor["title"], sensor[READ_KEY]))
+            self.D(TAG_SELF, u"传感器[id=%s, name=%s]的'数据读取'键修改为%s" % (str(sensor["id"]), sensor["title"], sensor[READ_KEY]))
             return
         if item.column() == SENSOR_COLUMN_DATA_WRITE :
             sensor[WRITE_KEY] = str(item.text())
-            self.D(TAG_SELF, u"传感器[id=%s, name=%s]的'数据上传'键修改为%s" % (sensor["id"], sensor["title"], sensor[WRITE_KEY]))
+            self.D(TAG_SELF, u"传感器[id=%s, name=%s]的'数据上传'键修改为%s" % (str(sensor["id"]), sensor["title"], sensor[WRITE_KEY]))
             return
         # TODO 如果修改的是值, 发请求更新服务器的值
         

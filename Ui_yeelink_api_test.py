@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'I:\python_job\yeelink_api_test.ui'
 #
-# Created: Wed Sep 10 13:02:56 2014
+# Created: Mon Sep 22 09:25:54 2014
 #      by: PyQt4 UI code generator 4.11.1
 #
 # WARNING! All changes made in this file will be lost!

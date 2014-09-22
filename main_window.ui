@@ -7,11 +7,11 @@
     <x>0</x>
     <y>0</y>
     <width>1160</width>
-    <height>843</height>
+    <height>876</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Yeelink API调试工具 v1.1 by wendal.net</string>
+   <string>物联网 API调试工具 v1.1 by wendal.net</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <widget class="QGroupBox" name="groupBox">
@@ -20,7 +20,7 @@
       <x>870</x>
       <y>10</y>
       <width>281</width>
-      <height>351</height>
+      <height>391</height>
      </rect>
     </property>
     <property name="autoFillBackground">
@@ -227,7 +227,7 @@
     <property name="geometry">
      <rect>
       <x>870</x>
-      <y>380</y>
+      <y>410</y>
       <width>281</width>
       <height>251</height>
      </rect>
@@ -336,21 +336,21 @@
       <x>10</x>
       <y>10</y>
       <width>851</width>
-      <height>351</height>
+      <height>391</height>
      </rect>
     </property>
     <property name="autoFillBackground">
      <bool>true</bool>
     </property>
     <property name="title">
-     <string>Yeelink信息</string>
+     <string>服务器信息</string>
     </property>
     <widget class="QLineEdit" name="ui_text_uapikey">
      <property name="geometry">
       <rect>
-       <x>110</x>
-       <y>30</y>
-       <width>461</width>
+       <x>120</x>
+       <y>90</y>
+       <width>291</width>
        <height>21</height>
       </rect>
      </property>
@@ -380,9 +380,9 @@
      </property>
      <property name="geometry">
       <rect>
-       <x>590</x>
-       <y>70</y>
-       <width>121</width>
+       <x>720</x>
+       <y>140</y>
+       <width>101</width>
        <height>31</height>
       </rect>
      </property>
@@ -393,9 +393,9 @@
     <widget class="QPushButton" name="ui_button_check_api">
      <property name="geometry">
       <rect>
-       <x>590</x>
-       <y>30</y>
-       <width>121</width>
+       <x>720</x>
+       <y>100</y>
+       <width>101</width>
        <height>31</height>
       </rect>
      </property>
@@ -412,8 +412,8 @@
     <widget class="QLabel" name="label_8">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>100</y>
+       <x>20</x>
+       <y>150</y>
        <width>81</width>
        <height>16</height>
       </rect>
@@ -425,8 +425,8 @@
     <widget class="QLabel" name="label_10">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>70</y>
+       <x>20</x>
+       <y>120</y>
        <width>72</width>
        <height>15</height>
       </rect>
@@ -439,7 +439,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>130</y>
+       <y>180</y>
        <width>831</width>
        <height>201</height>
       </rect>
@@ -503,8 +503,8 @@
     <widget class="QLabel" name="label_2">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>30</y>
+       <x>20</x>
+       <y>90</y>
        <width>72</width>
        <height>15</height>
       </rect>
@@ -516,8 +516,8 @@
     <widget class="QComboBox" name="ui_combo_devid">
      <property name="geometry">
       <rect>
-       <x>110</x>
-       <y>70</y>
+       <x>120</x>
+       <y>120</y>
        <width>291</width>
        <height>22</height>
       </rect>
@@ -536,12 +536,94 @@
       <string>API测试</string>
      </property>
     </widget>
+    <widget class="QComboBox" name="ui_txt_srv_type">
+     <property name="geometry">
+      <rect>
+       <x>120</x>
+       <y>30</y>
+       <width>141</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <item>
+      <property name="text">
+       <string>yeelink</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>uiot</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QLabel" name="label">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>30</y>
+       <width>91</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>服务器类型</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_9">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>60</y>
+       <width>91</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>服务器地址</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="ui_txt_srv_api_url">
+     <property name="geometry">
+      <rect>
+       <x>120</x>
+       <y>60</y>
+       <width>461</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>api.yeelink.net</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_11">
+     <property name="geometry">
+      <rect>
+       <x>420</x>
+       <y>90</y>
+       <width>72</width>
+       <height>15</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>用户名</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="ui_txt_username">
+     <property name="geometry">
+      <rect>
+       <x>480</x>
+       <y>90</y>
+       <width>201</width>
+       <height>21</height>
+      </rect>
+     </property>
+    </widget>
    </widget>
    <widget class="QGroupBox" name="groupBox_4">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>380</y>
+      <y>410</y>
       <width>851</width>
       <height>451</height>
      </rect>
@@ -580,7 +662,7 @@
     <property name="geometry">
      <rect>
       <x>950</x>
-      <y>720</y>
+      <y>750</y>
       <width>93</width>
       <height>28</height>
      </rect>
